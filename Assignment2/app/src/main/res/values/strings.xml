@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- APP NAME -->
+    <string name="app_name">StepByStep</string>
+
+    <!-- HEADER -->
+    <string name="app_title">StepByStep</string>
+    <string name="app_subtitle">Track your steps and shakes</string>
+
+    <!-- SESSION -->
+    <string name="current_session">CURRENT SESSION</string>
+    <string name="recording_status">กำลังบันทึก</string>
+
+    <!-- STEP -->
+    <string name="steps">STEPS</string>
+    <string name="step_count">ก้าวเดิน</string>
+    <string name="step_unit">ก้าว</string>
+    <string name="steps_per_minute">ก้าว/นาที</string>
+
+    <!-- SHAKE -->
+    <string name="shakes">SHAKES</string>
+    <string name="shake_count">ครั้งที่เขย่า</string>
+    <string name="shake_unit">ครั้ง</string>
+    <string name="shakes_per_minute">เขย่า/นาที</string>
+
+    <!-- STATISTICS -->
+    <string name="duration">ระยะเวลา</string>
+    <string name="total_summary">ยอดสะสมจากประวัติ</string>
+    <string name="overall_total">Overall Total</string>
+
+    <!-- BUTTONS -->
+    <string name="save_activity">บันทึกกิจกรรม</string>
+    <string name="reset_session">Reset Session</string>
+    <string name="cancel">ยกเลิก</string>
+    <string name="confirm">ยืนยัน</string>
+
+    <!-- HISTORY -->
+    <string name="activity_history">ประวัติกิจกรรม</string>
+    <string name="history_empty">ยังไม่มีประวัติกิจกรรม</string>
+    <string name="history_count">%1$d รายการ</string>
+    <string name="new_step_record">NEW STEP RECORD</string>
+    <string name="new_shake_record">NEW SHAKE RECORD</string>
+
+    <!-- SENSOR STATUS -->
+    <string name="sensor_waiting">Sensor: Waiting...</string>
+    <string name="sensor_ready">Sensor: Ready</string>
+    <string name="sensor_not_available">Sensor: Not Available</string>
+    <string name="sensor_permission_denied">Sensor: Permission Denied</string>
+    <string name="step_counter_ready">Sensor: Step Counter Ready</string>
+    <string name="step_detector_ready">Sensor: Step Detector Ready</string>
+
+    <!-- PERMISSION -->
+    <string name="permission_title">Activity Recognition Permission</string>
+    <string name="permission_message">กรุณาอนุญาตการเข้าถึงข้อมูลกิจกรรม เพื่อใช้งานระบบนับก้าวเดิน</string>
+    <string name="permission_required">จำเป็นต้องอนุญาต Activity Recognition เพื่อใช้งาน Step Sensor</string>
+
+    <!-- MESSAGES -->
+    <string name="save_success">บันทึกกิจกรรมเรียบร้อยแล้ว</string>
+    <string name="reset_success">รีเซ็ต Session เรียบร้อยแล้ว</string>
+    <string name="no_sensor_message">ไม่พบ Step Sensor ในโทรศัพท์</string>
+
+    <!-- Session -->
+    <string name="initial_time">00:00</string>
+    <string name="zero_value">0</string>
+    <string name="zero_rate">0.0</string>
+
+    <!-- Icons -->
+    <string name="icon_steps">👣</string>
+    <string name="icon_shakes">📱</string>
+
+    <!-- Summary -->
+    <string name="initial_total_steps">0 ก้าว</string>
+    <string name="initial_total_shakes">เขย่า 0 ครั้ง</string>
+
+
+</resources>

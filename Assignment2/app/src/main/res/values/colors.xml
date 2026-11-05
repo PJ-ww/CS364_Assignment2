@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ========================= -->
+    <!-- BACKGROUND -->
+    <!-- ========================= -->
+
+    <color name="background">#F5F9FC</color>
+    <color name="background_gradient_start">#F5F9FC</color>
+    <color name="background_gradient_end">#F5F9FC</color>
+
+    <!-- ========================= -->
+    <!-- BRAND BLUE -->
+    <!-- ========================= -->
+
+    <color name="brand_50">#F0F9FF</color>
+    <color name="brand_100">#E0F2FE</color>
+    <color name="brand_200">#BAE6FD</color>
+    <color name="brand_300">#7DD3FC</color>
+    <color name="brand_400">#38BDF8</color>
+    <color name="brand_500">#0EA5E9</color>
+    <color name="brand_600">#0284C7</color>
+    <color name="brand_700">#0369A1</color>
+    <color name="brand_800">#075985</color>
+    <color name="brand_900">#0C4A6E</color>
+
+    <!-- ========================= -->
+    <!-- TEXT -->
+    <!-- ========================= -->
+
+    <color name="text_primary">#1E293B</color>
+    <color name="text_secondary">#475569</color>
+    <color name="text_muted">#52637A</color>
+    <color name="badge_total_text">#1565C0</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <!-- ========================= -->
+    <!-- CARD -->
+    <!-- ========================= -->
+
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_border">#E0F2FE</color>
+
+    <!-- ========================= -->
+    <!-- STEP -->
+    <!-- ========================= -->
+
+    <color name="step_background">#F0F9FF</color>
+    <color name="step_border">#BAE6FD</color>
+    <color name="step_primary">#0284C7</color>
+
+    <!-- ========================= -->
+    <!-- SHAKE -->
+    <!-- ========================= -->
+
+    <color name="shake_background">#FAF5FF</color>
+    <color name="shake_border">#E9D5FF</color>
+    <color name="shake_primary">#9333EA</color>
+    <color name="shake_light">#F3E8FF</color>
+
+    <!-- ========================= -->
+    <!-- STATUS -->
+    <!-- ========================= -->
+
+    <color name="success">#10B981</color>
+    <color name="warning">#F59E0B</color>
+    <color name="danger">#EF4444</color>
+
+    <!-- ========================= -->
+    <!-- BUTTON -->
+    <!-- ========================= -->
+
+    <color name="button_primary">#0284C7</color>
+    <color name="button_primary_pressed">#0369A1</color>
+    <color name="button_secondary">#E0F2FE</color>
+
+    <!-- ========================= -->
+    <!-- HISTORY -->
+    <!-- ========================= -->
+
+    <color name="history_background">#FFFFFF</color>
+    <color name="history_divider">#E2E8F0</color>
+    <color name="history_badge_step">#E0F2FE</color>
+    <color name="history_badge_shake">#F3E8FF</color>
+
+</resources>
