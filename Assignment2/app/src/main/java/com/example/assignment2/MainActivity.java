@@ -35,14 +35,17 @@ public class MainActivity extends AppCompatActivity
 
     private Sensor stepCounterSensor;
     private Sensor stepDetectorSensor;
+    private Sensor accelerometerSensor;
 
     private boolean isSensorRegistered = false;
 
     // ==============================
-    // STEP DATA
+    // STEP & SHAKE DATA
     // ==============================
 
     private int currentSteps = 0;
+    private int currentShakes = 0;
+    private long mLastShakeTime = 0;
 
     // ค่าเริ่มต้นจาก Step Counter
     private float initialStepCount = 0;
@@ -62,7 +65,9 @@ public class MainActivity extends AppCompatActivity
     // ==============================
 
     private TextView tvSteps;
+    private TextView tvShakes;
     private TextView tvStepsPerMinute;
+    private TextView tvShakePerMinute;
     private TextView tvDuration;
     private TextView tvSessionTimer;
     private TextView tvSensorStatus;
@@ -109,10 +114,15 @@ public class MainActivity extends AppCompatActivity
                 Sensor.TYPE_STEP_DETECTOR
         );
 
+        accelerometerSensor = sensorManager.getDefaultSensor(
+                Sensor.TYPE_ACCELEROMETER
+        ); // Accelerometer Sensor
+
         // กู้คืนข้อมูลเมื่อหน้าจอถูกสร้างใหม่
         if (savedInstanceState != null) {
 
             currentSteps = savedInstanceState.getInt("steps");
+            currentShakes = savedInstanceState.getInt("shakes", 0);
 
             initialStepCount = savedInstanceState.getFloat("baseline");
 
@@ -164,9 +174,13 @@ public class MainActivity extends AppCompatActivity
     private void initializeViews() {
 
         tvSteps = findViewById(R.id.tvSteps);
+        tvShakes = findViewById(R.id.tvShakes);
 
         tvStepsPerMinute =
                 findViewById(R.id.tvStepsPerMinute);
+
+        tvShakePerMinute =
+                findViewById(R.id.tvShakePerMinute);
 
         tvDuration =
                 findViewById(R.id.tvDuration);
@@ -201,16 +215,18 @@ public class MainActivity extends AppCompatActivity
             } else {
 
                 registerStepSensor();
+                registerShakeSensor();
             }
 
         } else {
 
             registerStepSensor();
+            registerShakeSensor();
         }
     }
 
     // ==============================
-    // REGISTER STEP SENSOR
+    // REGISTER STEP & SHAKE SENSOR
     // ==============================
 
     private void registerStepSensor() {
@@ -234,6 +250,7 @@ public class MainActivity extends AppCompatActivity
                         getString(R.string.step_counter_ready)
                 );
 
+                registerShakeSensor();
                 return;
             }
         }
@@ -255,6 +272,7 @@ public class MainActivity extends AppCompatActivity
                         getString(R.string.step_detector_ready)
                 );
 
+                registerShakeSensor();
                 return;
             }
         }
@@ -268,6 +286,18 @@ public class MainActivity extends AppCompatActivity
                 "ไม่พบ Step Sensor ในโทรศัพท์",
                 Toast.LENGTH_LONG
         ).show();
+
+        registerShakeSensor();
+    }
+
+    private void registerShakeSensor() {
+        if (accelerometerSensor != null) {
+            sensorManager.registerListener(
+                    this,
+                    accelerometerSensor,
+                    SensorManager.SENSOR_DELAY_UI
+            );
+        }
     }
 
     // ==============================
@@ -312,6 +342,30 @@ public class MainActivity extends AppCompatActivity
 
             // Step Detector แจ้งเมื่อเดินครบหนึ่งก้าว
             currentSteps++;
+
+        } else if (event.sensor.getType()
+                == Sensor.TYPE_ACCELEROMETER) {
+
+            // ตรวจจับการเขย่าด้วย Accelerometer
+            float x = event.values[0];
+            float y = event.values[1];
+            float z = event.values[2];
+
+            float gX = x / SensorManager.GRAVITY_EARTH;
+            float gY = y / SensorManager.GRAVITY_EARTH;
+            float gZ = z / SensorManager.GRAVITY_EARTH;
+
+            // คำนวณแรง G-force รวม
+            float gForce = (float) Math.sqrt(gX * gX + gY * gY + gZ * gZ);
+
+            if (gForce > 2.2f) { // Threshold สำหรับการเขย่า
+                long now = System.currentTimeMillis();
+                if (mLastShakeTime + 500 > now) {
+                    return; // ป้องกันการนับซ้ำถี่เกินไป
+                }
+                mLastShakeTime = now;
+                currentShakes++;
+            }
         }
 
         // อัปเดตหน้าจอ
@@ -332,6 +386,13 @@ public class MainActivity extends AppCompatActivity
         tvSteps.setText(
                 String.valueOf(currentSteps)
         );
+
+        // แสดงจำนวนครั้งการเขย่า
+        if (tvShakes != null) {
+            tvShakes.setText(
+                    String.valueOf(currentShakes)
+            );
+        }
 
         // คำนวณเวลาที่ผ่านไป
         long elapsedMillis =
@@ -362,6 +423,25 @@ public class MainActivity extends AppCompatActivity
                         stepsPerMinute
                 )
         );
+
+        // คำนวณ Shakes per Minute
+        double shakesPerMinute = 0.0;
+
+        if (elapsedSeconds > 0) {
+
+            shakesPerMinute =
+                    (currentShakes * 60.0) / elapsedSeconds;
+        }
+
+        if (tvShakePerMinute != null) {
+            tvShakePerMinute.setText(
+                    String.format(
+                            Locale.US,
+                            "%.1f",
+                            shakesPerMinute
+                    )
+            );
+        }
     }
 
     // ==============================
@@ -415,6 +495,7 @@ public class MainActivity extends AppCompatActivity
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                 registerStepSensor();
+                registerShakeSensor();
 
             } else {
 
@@ -427,6 +508,8 @@ public class MainActivity extends AppCompatActivity
                         "กรุณาอนุญาต Activity Recognition เพื่อใช้งาน Step Sensor",
                         Toast.LENGTH_LONG
                 ).show();
+
+                registerShakeSensor();
             }
         }
     }
@@ -448,6 +531,7 @@ public class MainActivity extends AppCompatActivity
 
             registerStepSensor();
         }
+        registerShakeSensor();
     }
 
     // ==============================
@@ -475,6 +559,7 @@ public class MainActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
 
         outState.putInt("steps", currentSteps);
+        outState.putInt("shakes", currentShakes);
 
         outState.putFloat("baseline", initialStepCount);
 
