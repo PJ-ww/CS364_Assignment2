@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.view.View;
+import androidx.appcompat.app.AlertDialog;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,6 +59,20 @@ public class MainActivity extends AppCompatActivity
     // ==============================
 
     private long sessionStartTime;
+    private long sessionStartedAt;
+    private float latestStepCount;
+    private boolean hasLatestStepCount;
+    private SessionStore sessionStore;
+    private boolean hasSavedSummary;
+    private SessionStore.Summary summary = new SessionStore.Summary(0, 0, 0, 0, 0);
+    private TextView tvTotalSteps, tvTotalShakes, tvHistoryEmpty;
+    private TextView tvStepRecord, tvShakeRecord;
+
+    /** Person 4: override and return the SQLite implementation. Calls run on the UI thread. */
+    protected SessionStore createSessionStore() {
+        return null;
+    }
+
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
@@ -100,6 +116,15 @@ public class MainActivity extends AppCompatActivity
 
         // เชื่อม UI
         initializeViews();
+        sessionStore = createSessionStore();
+        findViewById(R.id.btnStart).setOnClickListener(v -> saveSession());
+        findViewById(R.id.btnResetSession).setOnClickListener(v ->
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.reset_session)
+                        .setMessage(R.string.reset_confirmation)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.confirm, (dialog, which) -> resetSession())
+                        .show());
 
         // เชื่อม SensorManager
         sensorManager = (SensorManager)
@@ -121,6 +146,9 @@ public class MainActivity extends AppCompatActivity
         // กู้คืนข้อมูลเมื่อหน้าจอถูกสร้างใหม่
         if (savedInstanceState != null) {
 
+            sessionStartedAt = savedInstanceState.getLong("sessionStartedAt", System.currentTimeMillis());
+            latestStepCount = savedInstanceState.getFloat("latestStepCount");
+            hasLatestStepCount = savedInstanceState.getBoolean("hasLatestStepCount");
             currentSteps = savedInstanceState.getInt("steps");
             currentShakes = savedInstanceState.getInt("shakes", 0);
 
@@ -135,6 +163,7 @@ public class MainActivity extends AppCompatActivity
         } else {
 
             sessionStartTime = SystemClock.elapsedRealtime();
+            sessionStartedAt = System.currentTimeMillis();
         }
 
         // ตั้งค่า Edge-to-Edge
@@ -173,6 +202,11 @@ public class MainActivity extends AppCompatActivity
 
     private void initializeViews() {
 
+        tvTotalSteps = findViewById(R.id.tvTotalSteps);
+        tvTotalShakes = findViewById(R.id.tvTotalShakes);
+        tvHistoryEmpty = findViewById(R.id.tvHistoryEmpty);
+        tvStepRecord = findViewById(R.id.tvStepRecord);
+        tvShakeRecord = findViewById(R.id.tvShakeRecord);
         tvSteps = findViewById(R.id.tvSteps);
         tvShakes = findViewById(R.id.tvShakes);
 
@@ -311,6 +345,8 @@ public class MainActivity extends AppCompatActivity
 
             // อ่านจำนวนก้าวสะสมจากโทรศัพท์
             float totalSteps = event.values[0];
+            latestStepCount = totalSteps;
+            hasLatestStepCount = true;
 
             // กำหนดค่าเริ่มต้นครั้งแรก
             if (!hasInitialStepCount) {
@@ -382,6 +418,9 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
+        tvStepRecord.setVisibility(hasSavedSummary && currentSteps > summary.maxSteps ? View.VISIBLE : View.GONE);
+        tvShakeRecord.setVisibility(hasSavedSummary && currentShakes > summary.maxShakes ? View.VISIBLE : View.GONE);
+        findViewById(R.id.btnStart).setEnabled(currentSteps > 0 || currentShakes > 0);
         // แสดงจำนวนก้าว
         tvSteps.setText(
                 String.valueOf(currentSteps)
@@ -441,6 +480,57 @@ public class MainActivity extends AppCompatActivity
                             shakesPerMinute
                     )
             );
+        }
+    }
+
+    private void saveSession() {
+        if (currentSteps == 0 && currentShakes == 0) return;
+        if (sessionStore == null) {
+            Toast.makeText(this, R.string.storage_not_connected, Toast.LENGTH_LONG).show();
+            return;
+        }
+        long durationMillis = Math.max(1, SystemClock.elapsedRealtime() - sessionStartTime);
+        SessionStore.Session session = new SessionStore.Session(sessionStartedAt,
+                currentSteps, currentShakes, durationMillis);
+        try {
+            sessionStore.insert(session);
+        } catch (Exception error) {
+            Toast.makeText(this, R.string.save_failed, Toast.LENGTH_LONG).show();
+            return; // Keep the current round available for retry.
+        }
+        resetSession();
+        refreshSavedSummary();
+        Toast.makeText(this, R.string.save_success, Toast.LENGTH_SHORT).show();
+    }
+
+    private void resetSession() {
+        currentSteps = 0;
+        currentShakes = 0;
+        mLastShakeTime = 0;
+        // Rebase to the last absolute reading so the next event retains new steps.
+        initialStepCount = latestStepCount;
+        hasInitialStepCount = hasLatestStepCount;
+        sessionStartTime = SystemClock.elapsedRealtime();
+        sessionStartedAt = System.currentTimeMillis();
+        updateSessionDisplay();
+    }
+
+    /** Also call after person 5 deletes an entry, once SQLite recalculation succeeds. */
+    public void refreshSavedSummary() {
+        if (sessionStore == null) {
+            tvHistoryEmpty.setText(R.string.storage_not_connected);
+            return;
+        }
+        try {
+            summary = sessionStore.readSummary();
+            hasSavedSummary = true;
+            tvTotalSteps.setText(getString(R.string.total_steps_value, summary.totalSteps));
+            tvTotalShakes.setText(getString(R.string.total_shakes_value, summary.totalShakes));
+            tvHistoryEmpty.setText(summary.count == 0 ? getString(R.string.history_empty)
+                    : getString(R.string.history_count, summary.count));
+            updateSessionDisplay();
+        } catch (Exception error) {
+            tvHistoryEmpty.setText(R.string.summary_failed);
         }
     }
 
@@ -522,6 +612,7 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
 
         super.onResume();
+        refreshSavedSummary();
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
                 || ContextCompat.checkSelfPermission(
@@ -558,6 +649,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onSaveInstanceState(Bundle outState) {
 
+        outState.putLong("sessionStartedAt", sessionStartedAt);
+        outState.putFloat("latestStepCount", latestStepCount);
+        outState.putBoolean("hasLatestStepCount", hasLatestStepCount);
         outState.putInt("steps", currentSteps);
         outState.putInt("shakes", currentShakes);
 

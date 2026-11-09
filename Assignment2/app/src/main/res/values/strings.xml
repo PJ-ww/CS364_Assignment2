@@ -74,4 +74,10 @@
     <string name="initial_total_shakes">เขย่า 0 ครั้ง</string>
 
 
+    <string name="reset_confirmation">เริ่มรอบใหม่และล้างค่ารอบนี้โดยไม่บันทึก?</string>
+    <string name="storage_not_connected">ยังไม่ได้เชื่อมฐานข้อมูล</string>
+    <string name="save_failed">บันทึกไม่สำเร็จ ข้อมูลรอบนี้ยังอยู่ กรุณาลองอีกครั้ง</string>
+    <string name="summary_failed">โหลดข้อมูลสะสมไม่สำเร็จ</string>
+    <string name="total_steps_value">%1$d ก้าว</string>
+    <string name="total_shakes_value">เขย่า %1$d ครั้ง</string>
 </resources>
