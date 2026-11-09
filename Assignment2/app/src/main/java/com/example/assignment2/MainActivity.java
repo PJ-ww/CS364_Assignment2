@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity
 
     /** Person 4: override and return the SQLite implementation. Calls run on the UI thread. */
     protected SessionStore createSessionStore() {
-        return null;
+        return new DBHelper(this);
     }
 
 
