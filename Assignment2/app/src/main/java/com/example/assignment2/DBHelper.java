@@ -20,14 +20,14 @@ public class DBHelper extends SQLiteOpenHelper implements SessionStore {
     private static final String DB_NAME = "stepbystep.db";
     private static final int DB_VERSION = 1;
 
-    static final String TABLE = "activity_log";
-    static final String COL_ID = "_id";
-    static final String COL_STARTED = "started_at";
-    static final String COL_DURATION = "duration_ms";
-    static final String COL_STEPS = "steps";
-    static final String COL_SHAKES = "shakes";
-    static final String COL_STEPS_PM = "steps_per_min";
-    static final String COL_SHAKES_PM = "shakes_per_min";
+    private static final String TABLE = "activity_log";
+    private static final String COL_ID = "_id";
+    private static final String COL_STARTED = "started_at";
+    private static final String COL_DURATION = "duration_ms";
+    private static final String COL_STEPS = "steps";
+    private static final String COL_SHAKES = "shakes";
+    private static final String COL_STEPS_PM = "steps_per_min";
+    private static final String COL_SHAKES_PM = "shakes_per_min";
 
     public DBHelper(Context context) {
         super(context.getApplicationContext(), DB_NAME, null, DB_VERSION);
@@ -51,9 +51,13 @@ public class DBHelper extends SQLiteOpenHelper implements SessionStore {
         onCreate(db);
     }
 
+    // ------------------------------------------------------------
     // Checklist item 6: Insert Session
+    // Saves one round inside a transaction. On failure it throws
+    // (SQLiteException), which MainActivity catches to keep the round.
+    // ------------------------------------------------------------
     @Override
-    public void insert(Session session) throws Exception {
+    public void insert(Session session) {
         ContentValues values = new ContentValues();
         values.put(COL_STARTED, session.startedAtMillis);
         values.put(COL_DURATION, session.durationMillis);
@@ -75,7 +79,11 @@ public class DBHelper extends SQLiteOpenHelper implements SessionStore {
         }
     }
 
+    // ------------------------------------------------------------
     // Checklist item 7: Query & Persistence (newest first)
+    // Used by person 5's RecyclerView.
+    // ------------------------------------------------------------
+    @SuppressWarnings("unused") // remove once the RecyclerView calls it
     public List<ActivityItem> getAll() {
         List<ActivityItem> list = new ArrayList<>();
         try (Cursor c = getReadableDatabase().query(TABLE, null, null, null,
@@ -87,6 +95,8 @@ public class DBHelper extends SQLiteOpenHelper implements SessionStore {
         return list;
     }
 
+    /** @return the item, or null if the id does not exist. */
+    @SuppressWarnings("unused") // remove once the detail dialog calls it
     public ActivityItem getById(long id) {
         try (Cursor c = getReadableDatabase().query(TABLE, null,
                 COL_ID + "=?", new String[]{String.valueOf(id)},
@@ -98,8 +108,14 @@ public class DBHelper extends SQLiteOpenHelper implements SessionStore {
         return null;
     }
 
+    // ------------------------------------------------------------
     // Checklist item 8: Delete & Recalculate
-    /** @return true if a row was deleted. Call MainActivity.refreshSavedSummary() afterwards. */
+    // ------------------------------------------------------------
+    /**
+     * @return true if a row was deleted.
+     * Call MainActivity.refreshSavedSummary() afterward to update the totals.
+     */
+    @SuppressWarnings("unused") // remove once the delete button calls it
     public boolean delete(long id) {
         int rows = getWritableDatabase().delete(TABLE, COL_ID + "=?",
                 new String[]{String.valueOf(id)});
@@ -108,7 +124,7 @@ public class DBHelper extends SQLiteOpenHelper implements SessionStore {
 
     /** Totals and maxima are always recomputed from the rows that exist now. */
     @Override
-    public Summary readSummary() throws Exception {
+    public Summary readSummary() {
         String sql = "SELECT COALESCE(SUM(" + COL_STEPS + "),0), "
                 + "COALESCE(SUM(" + COL_SHAKES + "),0), "
                 + "COALESCE(MAX(" + COL_STEPS + "),0), "
