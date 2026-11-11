@@ -476,7 +476,7 @@
                 android:id="@+id/tvHistoryEmpty"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/history_empty"
+                android:text=""
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary"
                 tools:ignore="TextContrast"/>
@@ -485,16 +485,22 @@
 
         <!-- HISTORY CONTAINER -->
 
-        <LinearLayout
-            android:id="@+id/historyContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="15dp"
-            android:background="@drawable/bg_history_item"
-            android:elevation="2dp"
-            android:layout_marginBottom="28dp"/>
+    <TextView
+        android:id="@+id/tvHistoryEmptyState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_history_item"
+        android:gravity="center"
+        android:padding="20dp"
+        android:text="@string/history_empty"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp" />
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false"
+        android:visibility="gone" />
     </LinearLayout>
-
 </ScrollView>

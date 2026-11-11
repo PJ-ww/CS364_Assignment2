@@ -23,8 +23,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.Locale;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements SensorEventListener {
@@ -88,6 +94,11 @@ public class MainActivity extends AppCompatActivity
     private TextView tvSessionTimer;
     private TextView tvSensorStatus;
 
+    private DBHelper historyDb;
+    private RecyclerView rvHistory;
+    private TextView tvHistoryEmptyState;
+    private ActivityAdapter historyAdapter;
+
     // ==============================
     // TIMER UPDATE
     // ==============================
@@ -117,6 +128,9 @@ public class MainActivity extends AppCompatActivity
         // เชื่อม UI
         initializeViews();
         sessionStore = createSessionStore();
+        if (sessionStore instanceof DBHelper) {
+            historyDb = (DBHelper) sessionStore;
+        }
         findViewById(R.id.btnStart).setOnClickListener(v -> saveSession());
         findViewById(R.id.btnResetSession).setOnClickListener(v ->
                 new AlertDialog.Builder(this)
@@ -224,6 +238,15 @@ public class MainActivity extends AppCompatActivity
 
         tvSensorStatus =
                 findViewById(R.id.tvSensorStatus);
+
+        rvHistory = findViewById(R.id.rvHistory);
+        tvHistoryEmptyState = findViewById(R.id.tvHistoryEmptyState);
+
+        rvHistory.setLayoutManager(new LinearLayoutManager(this));
+        rvHistory.setNestedScrollingEnabled(false);
+
+        historyAdapter = new ActivityAdapter(this::showActivityDetails);
+        rvHistory.setAdapter(historyAdapter);
     }
 
     // ==============================
@@ -526,12 +549,104 @@ public class MainActivity extends AppCompatActivity
             hasSavedSummary = true;
             tvTotalSteps.setText(getString(R.string.total_steps_value, summary.totalSteps));
             tvTotalShakes.setText(getString(R.string.total_shakes_value, summary.totalShakes));
-            tvHistoryEmpty.setText(summary.count == 0 ? getString(R.string.history_empty)
+            tvHistoryEmpty.setText(summary.count == 0
+                    ? ""
                     : getString(R.string.history_count, summary.count));
+
+            refreshHistoryList();
             updateSessionDisplay();
         } catch (Exception error) {
             tvHistoryEmpty.setText(R.string.summary_failed);
         }
+    }
+    private void refreshHistoryList() {
+        if (historyDb == null || historyAdapter == null) {
+            return;
+        }
+
+        List<ActivityItem> items = historyDb.getAll();
+        historyAdapter.setItems(items);
+
+        boolean isEmpty = items.isEmpty();
+        tvHistoryEmptyState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        rvHistory.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+    }
+
+    private void showActivityDetails(ActivityItem clickedItem) {
+        ActivityItem item = historyDb == null
+                ? clickedItem
+                : historyDb.getById(clickedItem.id);
+
+        if (item == null) {
+            refreshSavedSummary();
+            return;
+        }
+
+        View dialogView = getLayoutInflater()
+                .inflate(R.layout.dialog_activity_detail, null);
+
+        TextView date = dialogView.findViewById(R.id.tvDetailDate);
+        TextView steps = dialogView.findViewById(R.id.tvDetailSteps);
+        TextView shakes = dialogView.findViewById(R.id.tvDetailShakes);
+        TextView duration = dialogView.findViewById(R.id.tvDetailDuration);
+        TextView stepsRate = dialogView.findViewById(R.id.tvDetailStepsRate);
+        TextView shakesRate = dialogView.findViewById(R.id.tvDetailShakesRate);
+
+        String dateText = new SimpleDateFormat(
+                "dd/MM/yyyy HH:mm", Locale.getDefault())
+                .format(new Date(item.startedAtMillis));
+
+        date.setText(getString(R.string.detail_date, dateText));
+        steps.setText(getString(R.string.detail_steps, item.steps));
+        shakes.setText(getString(R.string.detail_shakes, item.shakes));
+        duration.setText(getString(
+                R.string.detail_duration,
+                formatHistoryDuration(item.durationMillis)));
+        stepsRate.setText(String.format(Locale.getDefault(),
+                "ความเร็วเดิน: %.1f ก้าว/นาที", item.stepsPerMinute));
+        shakesRate.setText(String.format(Locale.getDefault(),
+                "ความเร็วเขย่า: %.1f ครั้ง/นาที", item.shakesPerMinute));
+
+        new AlertDialog.Builder(this)
+                .setTitle("รายละเอียดกิจกรรม")
+                .setView(dialogView)
+                .setNegativeButton("ลบรายการ", (dialog, which) ->
+                        confirmDeleteActivity(item))
+                .setPositiveButton("ปิด", null)
+                .show();
+    }
+
+    private void confirmDeleteActivity(ActivityItem item) {
+        new AlertDialog.Builder(this)
+                .setTitle("ยืนยันการลบ")
+                .setMessage("ต้องการลบประวัติกิจกรรมนี้หรือไม่?")
+                .setNegativeButton("ยกเลิก", null)
+                .setPositiveButton("ลบ", (dialog, which) -> {
+                    if (historyDb != null && historyDb.delete(item.id)) {
+                        refreshSavedSummary();
+                        Toast.makeText(this, "ลบประวัติแล้ว",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "ลบรายการไม่สำเร็จ",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
+    }
+
+    private String formatHistoryDuration(long durationMillis) {
+        long totalSeconds = Math.max(0, durationMillis / 1000);
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            return String.format(Locale.getDefault(),
+                    "%d:%02d:%02d ชั่วโมง", hours, minutes, seconds);
+        }
+
+        return String.format(Locale.getDefault(),
+                "%d:%02d นาที", minutes, seconds);
     }
 
     // ==============================

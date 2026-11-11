@@ -41,6 +41,13 @@
     <string name="history_count">%1$d รายการ</string>
     <string name="new_step_record">NEW STEP RECORD</string>
     <string name="new_shake_record">NEW SHAKE RECORD</string>
+    <string name="detail_date">วันเวลา: %1$s</string>
+    <string name="detail_steps">จำนวนก้าว: %1$d ก้าว</string>
+    <string name="detail_shakes">จำนวนเขย่า: %1$d ครั้ง</string>
+    <string name="detail_duration">ระยะเวลา: %1$s</string>
+
+    <string name="activity_row_counts">%1$d ก้าว • %2$d ครั้งที่เขย่า</string>
+    <string name="activity_row_duration">ระยะเวลา %1$s</string>
 
     <!-- SENSOR STATUS -->
     <string name="sensor_waiting">Sensor: Waiting...</string>
